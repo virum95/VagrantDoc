@@ -1,0 +1,56 @@
+Todo igual
+Script tio random
+añadir lineas mysql
+User: wpuser Pass: wppass
+crear cosa wp-config.php con lo que sale de wordpress
+pass del sitio: FFk0rtyyOQS#K3V(yR
+
+Instalacion de vagrant
+La instalacion de vagrant en Debian es bastante trivial. Descargamos el .deb de la pagina web https://www.vagrantup.com/downloads.html y hacemos la instalacion. Para comprobar que la instalacion ha sido correcta, ejecutamos el comando vagrant -v. Si sale un numero de version, la instalacion habra sido la correcta.
+
+Creacion y configuracion de la caja Vagrant
+El siguiente paso despues de la instalacion es la creacion de la caja. Para ello creamos una carpeta con el nombre deseado e iniciamos vagrant en ese directorio.
+mkdir nombreDeLaCaja
+cd nombreDeLaCaja
+vagrant init
+Despues de esto, pasaremos a configurar la caja editando el Vagrantfile:
+config.vm.box = "ubuntu/xenial64"
+config.vm.network "forwarded_port", guest: 80, host: 8080
+config.vm.network "public_network"
+config.vm.synced_folder "wordpress/", "/var/www/html/"
+
+Aprovisionamiento
+Para hacer el aprovisionamiento, tenemos dos opciones.
+config.vm.provision "shell", inline: <<-SHELL
+...
+SHELL
+E introducir entre los 'SHELL' los comandos que queramos ejecutar cuando se lance el aprovisionamiento, o indicar en el Vagrantfile un archivo  mediante
+config.vm.provision "shell", path: "config.sh"
+en el que introduzcamos los comandos. Generalmente, es mas limpio hacer la segunda opcion, pero nosotros hemos optado por la primera debido a los pocos comandos que ibamos a ejecutar y con el fin de tener todo en el mismo sitio.
+
+Lo primero de todo, es actualizar el servidor. Añadimos estas dos lineas:
+apt-get update
+apt-get upgrade -y
+
+Para instalar apache, este es el comando:
+#Apache
+apt-get install -y apache2
+
+La instalacion de PHP:
+#PHP
+apt-get install php7.0 libapache2-mod-php7.0 php7.0-cli php7.0-mysql -y
+
+MySQL se instala con estos comandos:
+# MySQL
+echo "mysql-server mysql-server/root_password password PASSWORD" | sudo debconf-set-selections
+echo "mysql-server mysql-server/root_password_again password PASSWORD" | sudo debconf-set-selections
+apt-get install mysql-client mysql-server -y
+
+Una vez tengamos todo instalado reiniciamos el servicio de apache para que los cambios tengan efecto
+service apache2 restart
+
+En este instante si nos conectamos al servidor, veremos la pagina por defecto de wordpress
+
+#Database
+mysql -u root -pPASSWORD -e "create database wordpress"
+mysql -u root -pPASSWORD -e "grant all on wordpress.* to 'wpuser'@'localhost' identified by 'wppass'"
